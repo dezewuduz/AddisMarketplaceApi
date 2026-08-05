@@ -1,0 +1,6 @@
+@AddisMarketplaceApi_HostAddress = http://localhost:5161
+
+GET {{AddisMarketplaceApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
