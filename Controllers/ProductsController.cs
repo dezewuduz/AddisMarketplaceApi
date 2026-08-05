@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using AddisMarketplaceApi.Data;
 using AddisMarketplaceApi.Models;
@@ -33,7 +35,7 @@ public class ProductsController : ControllerBase
         return product;
     }
 
-    // GET: api/products/seller/1  ← ለአንድ ሻጭ ምርቶች ብቻ
+    // GET: api/products/seller/1
     [HttpGet("seller/{sellerId}")]
     public async Task<ActionResult<IEnumerable<Product>>> GetProductsBySeller(int sellerId)
     {
@@ -42,10 +44,11 @@ public class ProductsController : ControllerBase
 
     // POST: api/products
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<Product>> CreateProduct(Product product)
     {
-        var sellerExists = await _context.Sellers.AnyAsync(s => s.Id == product.SellerId);
-        if (!sellerExists) return BadRequest("SellerId የተባለ ሻጭ አልተገኘም።");
+        var sellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        product.SellerId = sellerId;
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
@@ -54,20 +57,41 @@ public class ProductsController : ControllerBase
 
     // PUT: api/products/5
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateProduct(int id, Product product)
     {
         if (id != product.Id) return BadRequest();
-        _context.Entry(product).State = EntityState.Modified;
+
+        var existingProduct = await _context.Products.FindAsync(id);
+        if (existingProduct == null) return NotFound();
+
+        var sellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (existingProduct.SellerId != sellerId)
+            return Forbid();
+
+        existingProduct.Name = product.Name;
+        existingProduct.Description = product.Description;
+        existingProduct.Price = product.Price;
+        existingProduct.PhotoUrl = product.PhotoUrl;
+        existingProduct.Category = product.Category;
+        existingProduct.IsActive = product.IsActive;
+
         await _context.SaveChangesAsync();
         return NoContent();
     }
 
     // DELETE: api/products/5
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         var product = await _context.Products.FindAsync(id);
         if (product == null) return NotFound();
+
+        var sellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (product.SellerId != sellerId)
+            return Forbid();
+
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
         return NoContent();

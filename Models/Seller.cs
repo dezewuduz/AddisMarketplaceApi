@@ -15,6 +15,7 @@ public class Seller
     [Required, MaxLength(20)]
     [RegularExpression(@"^(09|07)\d{8}$", ErrorMessage = "ስልክ ቁጥር በ09 ወይም 07 መጀመር እና 10 ዲጂት መሆን አለበት")]
     public string PhoneNumber { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
 
     public bool IsVerified { get; set; } = false;
 
