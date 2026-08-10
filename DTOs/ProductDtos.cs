@@ -5,9 +5,6 @@ namespace AddisMarketplaceApi.DTOs;
 // POST/PUT ላይ ገዥ (frontend) የሚልከው shape
 public class CreateProductDto
 {
-    [Required]
-    public int SellerId { get; set; }
-
     [Required, MaxLength(150)]
     public string Name { get; set; } = string.Empty;
 
