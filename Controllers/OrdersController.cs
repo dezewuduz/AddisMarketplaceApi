@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AddisMarketplaceApi.Data;
@@ -62,10 +64,17 @@ public class OrdersController : ControllerBase
 
     // PUT: api/orders/5/status
     [HttpPut("{id}/status")]
+    [Authorize]
     public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] UpdateStatusDto dto)
     {
-        var order = await _context.Orders.FindAsync(id);
+        var order = await _context.Orders
+            .Include(o => o.Product)
+            .FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound();
+
+        var loggedInSellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (order.Product!.SellerId != loggedInSellerId)
+            return Forbid();
 
         order.Status = dto.Status;
         await _context.SaveChangesAsync();

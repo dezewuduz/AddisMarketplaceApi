@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AddisMarketplaceApi.Data;
@@ -86,10 +88,15 @@ public class SellersController : ControllerBase
 
     // PUT: api/sellers/5
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateSeller(int id, CreateSellerDto dto)
     {
         var seller = await _context.Sellers.FindAsync(id);
         if (seller == null) return NotFound();
+
+        var loggedInSellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (seller.Id != loggedInSellerId)
+            return Forbid();
 
         seller.Name = dto.Name;
         seller.Location = dto.Location;
@@ -101,20 +108,27 @@ public class SellersController : ControllerBase
 
     // DELETE: api/sellers/5
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteSeller(int id)
     {
         var seller = await _context.Sellers.FindAsync(id);
         if (seller == null) return NotFound();
+
+        var loggedInSellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (seller.Id != loggedInSellerId)
+            return Forbid();
+
         _context.Sellers.Remove(seller);
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
     // GET: api/sellers/5/contact
-[HttpGet("{id}/contact")]
-public async Task<ActionResult<object>> GetSellerContact(int id)
-{
-    var seller = await _context.Sellers.FindAsync(id);
-    if (seller == null) return NotFound();
-    return new { phoneNumber = seller.PhoneNumber };
-}
+    [HttpGet("{id}/contact")]
+    public async Task<ActionResult<object>> GetSellerContact(int id)
+    {
+        var seller = await _context.Sellers.FindAsync(id);
+        if (seller == null) return NotFound();
+        return new { phoneNumber = seller.PhoneNumber };
+    }
 }
