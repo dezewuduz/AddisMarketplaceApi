@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using AddisMarketplaceApi.Data;
 using AddisMarketplaceApi.Models;
 using AddisMarketplaceApi.DTOs;
@@ -17,7 +19,7 @@ public class ProductsController : ControllerBase
         _context = context;
     }
 
-    // GET: api/products
+    // GET: api/products  ← ክፍት (ማንም ማየት ይችላል፣ ገዥዎች ምዝገባ አያስፈልጋቸውም)
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductResponseDto>>> GetProducts()
     {
@@ -39,7 +41,7 @@ public class ProductsController : ControllerBase
             .ToListAsync();
     }
 
-    // GET: api/products/5
+    // GET: api/products/5  ← ክፍት
     [HttpGet("{id}")]
     public async Task<ActionResult<ProductResponseDto>> GetProduct(int id)
     {
@@ -65,7 +67,7 @@ public class ProductsController : ControllerBase
         return product;
     }
 
-    // GET: api/products/seller/1
+    // GET: api/products/seller/1  ← ክፍት
     [HttpGet("seller/{sellerId}")]
     public async Task<ActionResult<IEnumerable<ProductResponseDto>>> GetProductsBySeller(int sellerId)
     {
@@ -88,16 +90,18 @@ public class ProductsController : ControllerBase
             .ToListAsync();
     }
 
-    // POST: api/products
+    // POST: api/products  ← ተጠብቋል፣ SellerId ራሱ ከ token ይመጣል
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<ProductResponseDto>> CreateProduct(CreateProductDto dto)
     {
-        var seller = await _context.Sellers.FindAsync(dto.SellerId);
-        if (seller == null) return BadRequest("SellerId የተባለ ሻጭ አልተገኘም።");
+        var sellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var seller = await _context.Sellers.FindAsync(sellerId);
+        if (seller == null) return BadRequest("ሻጭ አልተገኘም።");
 
         var product = new Product
         {
-            SellerId = dto.SellerId,
+            SellerId = sellerId,
             Name = dto.Name,
             Description = dto.Description,
             Price = dto.Price,
@@ -126,12 +130,17 @@ public class ProductsController : ControllerBase
         return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, response);
     }
 
-    // PUT: api/products/5
+    // PUT: api/products/5  ← ተጠብቋል፣ የራሱ ምርት ብቻ ማስተካከል ይችላል
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateProduct(int id, CreateProductDto dto)
     {
         var product = await _context.Products.FindAsync(id);
         if (product == null) return NotFound();
+
+        var sellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (product.SellerId != sellerId)
+            return Forbid();   // 403 — ይሄ ምርት የአንተ አይደለም
 
         product.Name = dto.Name;
         product.Description = dto.Description;
@@ -143,12 +152,18 @@ public class ProductsController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/products/5
+    // DELETE: api/products/5  ← ተጠብቋል፣ የራሱ ምርት ብቻ መሰረዝ ይችላል
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         var product = await _context.Products.FindAsync(id);
         if (product == null) return NotFound();
+
+        var sellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (product.SellerId != sellerId)
+            return Forbid();
+
         _context.Products.Remove(product);
         await _context.SaveChangesAsync();
         return NoContent();
