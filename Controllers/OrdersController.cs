@@ -80,6 +80,21 @@ public class OrdersController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+    // PUT: api/orders/5/confirm-payment
+    [HttpPut("{id}/confirm-payment")]
+    [Authorize]
+    public async Task<IActionResult> ConfirmPayment(int id)
+    {
+        var order = await _context.Orders.Include(o => o.Product).FirstOrDefaultAsync(o => o.Id == id);
+        if (order == null) return NotFound();
+
+        var loggedInSellerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        if (order.Product!.SellerId != loggedInSellerId) return Forbid();
+
+        order.IsPaid = true;
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }
 
 public class UpdateStatusDto

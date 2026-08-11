@@ -11,6 +11,13 @@ public enum OrderStatus
     Cancelled     // ተሰርዟል
 }
 
+public enum PaymentMethod
+{
+    Cash,        // እጅ በእጅ (ፓይለት ደረጃ ላይ ዋናው)
+    Telebirr,    // ወደፊት
+    CBEBirr      // ወደፊት
+}
+
 public class Order
 {
     public int Id { get; set; }
@@ -34,6 +41,10 @@ public class Order
     public decimal TotalPrice { get; set; }
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
+
+    public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cash;
+
+    public bool IsPaid { get; set; } = false;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
