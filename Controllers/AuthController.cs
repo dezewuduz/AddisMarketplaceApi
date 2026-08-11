@@ -64,7 +64,8 @@ public class AuthController : ControllerBase
     public async Task<ActionResult> Login(LoginDto dto)
     {
         var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.PhoneNumber == dto.PhoneNumber);
-        if (seller == null || !BCrypt.Net.BCrypt.Verify(dto.Password, seller.PasswordHash))
+
+        if (seller == null || string.IsNullOrEmpty(seller.PasswordHash) || !BCrypt.Net.BCrypt.Verify(dto.Password, seller.PasswordHash))
             return Unauthorized("ስልክ ቁጥር ወይም የይለፍ ቃል ልክ አይደለም።");
 
         var token = GenerateJwtToken(seller);
