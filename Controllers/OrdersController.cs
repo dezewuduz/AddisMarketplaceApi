@@ -41,6 +41,7 @@ public class OrdersController : ControllerBase
         return await _context.Orders
             .Where(o => o.Product!.SellerId == sellerId)
             .Include(o => o.Product)
+            .Include(o => o.Buyer)
             .ToListAsync();
     }
 
