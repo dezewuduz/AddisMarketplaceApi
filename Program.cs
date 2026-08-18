@@ -52,7 +52,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseStaticFiles();  // wwwroot/uploads ፎቶዎችን በ URL ማቅረብ ያስችላል
 app.UseCors("AllowAngularDev");   // ← ግድ ከ UseAuthentication በፊት
 
 app.UseAuthentication();
