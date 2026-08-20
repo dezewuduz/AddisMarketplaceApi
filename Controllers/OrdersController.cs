@@ -44,6 +44,17 @@ public class OrdersController : ControllerBase
             .Include(o => o.Buyer)
             .ToListAsync();
     }
+    // GET: api/orders/buyer-phone/0911223344
+[HttpGet("buyer-phone/{phoneNumber}")]
+public async Task<ActionResult<IEnumerable<Order>>> GetOrdersByBuyerPhone(string phoneNumber)
+{
+    return await _context.Orders
+        .Include(o => o.Product)
+        .Where(o => o.Buyer!.PhoneNumber == phoneNumber)
+        .Include(o => o.Buyer)
+        .OrderByDescending(o => o.CreatedAt)
+        .ToListAsync();
+}
 
     // POST: api/orders
     [HttpPost]
