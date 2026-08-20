@@ -131,4 +131,15 @@ public class SellersController : ControllerBase
         if (seller == null) return NotFound();
         return new { phoneNumber = seller.PhoneNumber };
     }
+    // PUT: api/sellers/5/verify
+[HttpPut("{id}/verify")]
+public async Task<IActionResult> VerifySeller(int id)
+{
+    var seller = await _context.Sellers.FindAsync(id);
+    if (seller == null) return NotFound();
+
+    seller.IsVerified = true;
+    await _context.SaveChangesAsync();
+    return NoContent();
+}
 }
